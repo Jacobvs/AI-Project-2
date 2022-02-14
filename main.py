@@ -26,8 +26,6 @@ def create_test_file(filename, is_problem_1: bool):
                 f.write(f"{type}\t{width}\t{strength}\t{cost}\n")
 
 
-# create_test_file('problem2.txt', False)
-
 def get_numbers(filename):
     # Read an input file with 40 numbers on each line
     # The numbers are returned as a list of integers
@@ -37,6 +35,7 @@ def get_numbers(filename):
         for line in f:
             numbers.append(int(line))
     return numbers
+
 
 def get_pieces(filename):
     with open(filename, 'r') as f:
@@ -49,28 +48,40 @@ def get_pieces(filename):
         return pieces
 
 
+def problem_1(nums, max_runtime_seconds):
+    GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
+                          use_elitism=False, use_culling=False, max_time_seconds=max_runtime_seconds)
+    gen_num, best = GA.run()
+
+    bins = '\n'.join(str(k) + ": " + str(v) for k, v in best.bins.items())
+    print(f"Best Individual:\nScore: {best.fitness:,}\nBins:\n{bins}")
+    print(f"Max Generation Reached: {gen_num}")
+
+
+
+def problem_2(pieces, max_runtime_seconds):
+    GA2 = GeneticAlgorithm(data=pieces, population_size=600, mutation_rate=0.3,
+                           use_elitism=False, use_culling=False, max_time_seconds=max_runtime_seconds)
+    gen_num, best2 = GA2.run()
+
+    # Print Best Individual
+    print(f"Best Individual:\nScore: {best2.fitness:,}\nStack:\n{best2}")
+    print(f"Max Generation Reached: {gen_num}")
+
+
 def main(*args):
     if len(args) == 3:
         problem = int(args[0])
         input_file = args[1]
         max_runtime_seconds = int(args[2])
+
         if problem == 1:
             nums = get_numbers(input_file)
-            GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
-                                  use_elitism=False, use_culling=False, max_time_seconds=max_runtime_seconds)
-            gen_num, best = GA.run()
-            bins = '\n'.join(str(k) + ": " + str(v) for k, v in best.bins.items())
-            print(f"Best Individual:\nScore: {best.fitness:,}\nBins:\n{bins}")
-            print(f"Max Generation Reached: {gen_num}")
+            problem_1(nums, max_runtime_seconds)
+
         elif problem == 2:
             pieces = get_pieces(input_file)
-            GA2 = GeneticAlgorithm(data=pieces, population_size=600, mutation_rate=0.3,
-                                   use_elitism=False, use_culling=False, max_time_seconds=10)
-            gen_num, best2 = GA2.run()
-
-            # Print Best Individual
-            print(f"Best Individual:\nScore: {best2.fitness:,}\nStack:\n{best2}")
-            print(f"Max Generation Reached: {gen_num}")
+            problem_2(pieces, max_runtime_seconds)
 
     elif len(args) == 0:
         run_p1 = input("Run Problem 1 or Problem 2? (1/2)")
@@ -87,25 +98,18 @@ def main(*args):
 
         if p1:
             nums = get_numbers('problem1.txt')
-
-            GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
-                                  use_elitism=False, use_culling=False, max_time_seconds=10)
-            gen_num, best = GA.run()
-
-            # Print Best Individual
-            print(f"Best Individual:\n\tScore: {best.fitness:,}\n\tBins: {best.bins}")
-
+            problem_1(nums, 10)
         else:
             pieces = get_pieces('problem2.txt')
-            GA2 = GeneticAlgorithm(data=pieces, population_size=500, mutation_rate=0.3,
-                                   use_elitism=False, use_culling=False, max_time_seconds=10)
-            best2 = GA2.run()
+            problem_2(pieces, 10)
 
-            # Print Best Individual
-            print(f"Best Individual:\n\tScore: {best2.fitness:,}\n\tStack: {best2}")
     else:
-        print("Usage: main.py <problem (1/2)> <input_file> <max_runtime_seconds>")
-        return
+        print("Invalid number of arguments")
+        print("Usage: main.py [problem] [input_file] [max_runtime_seconds]")
+        print("\tproblem: 1 for problem 1, 2 for problem 2")
+        print("\tinput_file: the file to read the numbers from")
+        print("\tmax_runtime_seconds: the maximum number of seconds to run the algorithm for")
+        print("If no arguments are given, the program will ask for input")
 
 if __name__ == "__main__":
     main(*sys.argv[1:])
