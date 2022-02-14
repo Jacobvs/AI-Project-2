@@ -7,6 +7,7 @@
 
 import random
 import time
+import typing
 from copy import copy
 
 import numpy as np
@@ -26,11 +27,32 @@ def find_and_swap_duplicates(list_1, list_2, l1_duplicate_index):
                 break
             else:
                 seen.append(list_2[i])
-
     return list_1, list_2
 
+def fix_duplicates(numberlist, original_frequencies: typing.Dict[int, int]):
+    new_freq = {}
+    remove_indexes = []
+    for i, num in enumerate(numberlist):
+        if num in new_freq:
+            if new_freq[num] >= original_frequencies[num]:
+                remove_indexes.append(i)
+            else:
+                new_freq[num] += 1
+        else:
+            if num not in original_frequencies:
+                remove_indexes.append(i)
+            else:
+             new_freq[num] = 1
 
-def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc):
+    for num, count in original_frequencies.items():
+        if num not in new_freq or count < new_freq[num]:
+            numberlist[remove_indexes[0]] = num
+            remove_indexes.pop(0)
+
+    return numberlist
+
+
+def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc, original_frequencies: typing.Dict[int, int]):
     # To get two children, the number list from each parent is split in half.
     # The first half is used for the first child, and the second half is used for the second child.
     # The numbers in the first child are scanned for duplicates,
@@ -42,26 +64,10 @@ def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc):
     c1_nums = parent1_first_half + parent2_second_half
     c2_nums = parent1_second_half + parent2_first_half
 
-    # Scan for duplicates in the first child
-    c1_seen = set(c1_nums)
-    seen = []
-    dups = []
-    for i in range(len(c1_nums)):
-        if c1_nums[i] in c1_seen:
-            if c1_nums[i] in seen:
-                # Found duplicate
-                dups.append(i)
-            else:
-                seen.append(c1_nums[i])
+    c1_nums = fix_duplicates(c1_nums, original_frequencies)
+    c2_nums = fix_duplicates(c2_nums, original_frequencies)
 
-    c1n = c1_nums
-    c2n = c2_nums
-    for i in dups:
-        c1_nums, c2_nums = find_and_swap_duplicates(c1n, c2n, i)
-        c1n = c1_nums
-        c2n = c2_nums
-
-    return NumberAlloc(c1n), NumberAlloc(c2n)
+    return NumberAlloc(c1_nums), NumberAlloc(c2_nums)
 
 
 class GeneticAlgorithm:
@@ -75,8 +81,17 @@ class GeneticAlgorithm:
         self.best_individual = None
         self.numbers = numbers
         self.convergence_threshold = 0.01
+        self.number_frequency = {}
         random.seed(1)
         np.random.seed(1)
+        self.get_frequencies()
+
+    def get_frequencies(self):
+        for i in range(len(self.numbers)):
+            if self.numbers[i] in self.number_frequency:
+                self.number_frequency[self.numbers[i]] += 1
+            else:
+                self.number_frequency[self.numbers[i]] = 1
 
     def generate_population(self):
         for i in range(self.population_size):
@@ -132,7 +147,7 @@ class GeneticAlgorithm:
 
                 # [Crossover] With a crossover probability cross over the parents to form a new offspring (children).
                 # If no crossover was performed, offspring is an exact copy of parents.
-                child_1, child_2 = crossover(parent_1, parent_2)
+                child_1, child_2 = crossover(parent_1, parent_2, self.number_frequency)
 
                 # [Mutation] With a mutation probability mutate new offspring at each locus (position in chromosome).
                 child_1.mutate(self.mutation_rate)
@@ -141,12 +156,12 @@ class GeneticAlgorithm:
                 # [Accepting] Place new offspring and parents in a new population
                 next_gen.append(child_1)
                 next_gen.append(child_2)
-                next_gen.append(parent_1)
-                next_gen.append(parent_2)
+                # next_gen.append(parent_1)
+                # next_gen.append(parent_2)
 
                 # Remove parents from population
-                self.population.remove(parent_1)
-                self.population.remove(parent_2)
+                # self.population.remove(parent_1)
+                # self.population.remove(parent_2)
 
 
             best_fit = max(next_gen, key=lambda x: x.fitness)

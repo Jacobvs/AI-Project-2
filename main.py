@@ -35,7 +35,7 @@ nums = get_numbers('test.txt')
 # best.mutate(0.5)
 # print(f"Best Individual:\n\tFitness: {best.fitness}\n\tBins: {best.bins}")
 
-GA = GeneticAlgorithm(nums, 20, 0.1, 10)
+GA = GeneticAlgorithm(nums, 20, 0.2, 10)
 best = GA.run()
 
 # Print Best Individual
