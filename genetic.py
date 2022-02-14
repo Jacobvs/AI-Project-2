@@ -70,6 +70,11 @@ def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc, original_frequencies
 class GeneticAlgorithm:
     def __init__(self, numbers: typing.List[int], population_size: int, mutation_rate: float, tournament_size: int,
                  use_culling: bool, use_elitism: bool, max_time):
+
+        # Ensure there are exactly 40 numbers
+        if len(numbers) != 40:
+            raise ValueError("Number list must contain 40 numbers")
+
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.max_time = max_time
