@@ -17,8 +17,6 @@ def create_test_file(filename):
 
 # create_test_file('test.txt')
 
-
-
 def get_numbers(filename):
     # Read an input file with 40 numbers on each line
     # The numbers are returned as a list of integers
@@ -30,12 +28,8 @@ def get_numbers(filename):
     return numbers
 
 nums = get_numbers('test.txt')
-# best = NumberAlloc(nums)
-# print(f"Best Individual:\n\tFitness: {best.fitness}\n\tBins: {best.bins}")
-# best.mutate(0.5)
-# print(f"Best Individual:\n\tFitness: {best.fitness}\n\tBins: {best.bins}")
 
-GA = GeneticAlgorithm(numbers=nums, population_size=20, mutation_rate=0.5, tournament_size=3,
+GA = GeneticAlgorithm(numbers=nums, population_size=20, mutation_rate=-1, tournament_size=4,
                       use_elitism=False, use_culling=False, max_time=10)
 best = GA.run()
 
