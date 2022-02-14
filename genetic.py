@@ -420,10 +420,11 @@ class GeneticAlgorithm:
             if best_fit.fitness > self.best_fitness:
                 self.best_fitness = best_fit.fitness
                 self.best_individual = best_fit
-                print(f"Generation {gen_num} | Best Fitness: {self.best_fitness:,} | Worst Fitness: {min(self.fitness_history)}")
+                # print(f"Generation {gen_num} | Best Fitness: {self.best_fitness:,} | Worst Fitness: {min(self.fitness_history)}")
 
-            # else:
-            #     print(f"Generation {gen_num} | Best Fitness: {self.best_fitness}")
+            else:
+                if gen_num % (100 if is_problem_1 else 10) == 0:
+                    print(f"{gen_num}, {self.best_fitness}, {min(self.fitness_history)}")
                 # # Check if fitness has converged
                 # if len(self.fitness_history) > 1:
                 #     if abs(self.fitness_history[-1] - self.fitness_history[-2]) < self.convergence_threshold:
