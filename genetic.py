@@ -39,13 +39,10 @@ def fix_duplicates(numberlist, original_frequencies: typing.Dict[int, int]):
             else:
                 new_freq[num] += 1
         else:
-            if num not in original_frequencies:
-                remove_indexes.append(i)
-            else:
              new_freq[num] = 1
 
     for num, count in original_frequencies.items():
-        if num not in new_freq or count < new_freq[num]:
+        if num not in new_freq or count > new_freq[num]:
             numberlist[remove_indexes[0]] = num
             remove_indexes.pop(0)
 
@@ -71,7 +68,8 @@ def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc, original_frequencies
 
 
 class GeneticAlgorithm:
-    def __init__(self, numbers, population_size, mutation_rate, max_time):
+    def __init__(self, numbers: typing.List[int], population_size: int, mutation_rate: float, tournament_size: int,
+                 use_culling: bool, use_elitism: bool, max_time):
         self.population_size = population_size
         self.mutation_rate = mutation_rate
         self.max_time = max_time
@@ -82,16 +80,19 @@ class GeneticAlgorithm:
         self.numbers = numbers
         self.convergence_threshold = 0.01
         self.number_frequency = {}
+        self.tournament_size = tournament_size
+        self.use_culling = use_culling
+        self.use_elitism = use_elitism
         random.seed(1)
         np.random.seed(1)
         self.get_frequencies()
 
     def get_frequencies(self):
-        for i in range(len(self.numbers)):
-            if self.numbers[i] in self.number_frequency:
-                self.number_frequency[self.numbers[i]] += 1
+        for n in self.numbers:
+            if n in self.number_frequency:
+                self.number_frequency[n] += 1
             else:
-                self.number_frequency[self.numbers[i]] = 1
+                self.number_frequency[n] = 1
 
     def generate_population(self):
         for i in range(self.population_size):
@@ -140,10 +141,23 @@ class GeneticAlgorithm:
 
         while time.time() - start_time < self.max_time:
             gen_num += 1
+
+            sorted_population = sorted(self.population, key=lambda x: x.fitness, reverse=True)
+            if self.use_elitism:
+                # Elistism
+                # Sort the population by fitness
+                # Select top 10% of the population to be added to next generation
+                next_gen = sorted_population[:int(self.population_size * 0.1)]
+
+            if self.use_culling:
+                # Culling
+                for i in sorted_population[int(self.population_size * 0.7):]:
+                    self.population.remove(i)
+
             while len(next_gen) < self.population_size:
 
                 # [Selection] Select two parent chromosomes from a population
-                parent_1, parent_2 = self.select_parents(sorted(self.population, key=lambda x: x.fitness), 5)
+                parent_1, parent_2 = self.select_parents(sorted(self.population, key=lambda x: x.fitness), self.tournament_size)
 
                 # [Crossover] With a crossover probability cross over the parents to form a new offspring (children).
                 # If no crossover was performed, offspring is an exact copy of parents.
