@@ -4,7 +4,6 @@ import typing
 from asyncio import sleep
 from copy import copy
 import random
-import Node
 
 
 class BinType(enum.Enum):

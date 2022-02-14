@@ -218,10 +218,7 @@ def crossover(parent_1, parent_2, original_frequencies: typing.Dict):
         p1_list = parent_1.listOfPieces
         p2_list = parent_2.listOfPieces
 
-
         c1_nums, c2_nums = uniform_random_xover(p1_list, p2_list, original_frequencies)
-
-
 
         # c1_nums = p1_list[:-(len(p1_list) // -2)]
         #

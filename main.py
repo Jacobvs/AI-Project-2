@@ -47,19 +47,33 @@ def get_pieces(filename):
             pieces.append(piece)
         return pieces
 
-# nums = get_numbers('test.txt')
-#
-# GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
-#                       use_elitism=False, use_culling=False, max_time_seconds=10)
-# best = GA.run()
-#
-# # Print Best Individual
-# print(f"Best Individual:\n\tFitness: {best.fitness:,}\n\tBins: {best.bins}")
+run_p1 = input("Run Problem 1 or Problem 2? (1/2)")
+p1 = True
+if run_p1 == '2':
+    p1 = False
 
-pieces = get_pieces('problem2.txt')
-GA2 = GeneticAlgorithm(data=pieces, population_size=20, mutation_rate=0.2,
-                       use_elitism=True, use_culling=True, max_time_seconds=10)
-best2 = GA2.run()
+gen_new = input("Generate new test file? (y/n)")
+if gen_new == 'y':
+    if p1:
+        create_test_file('problem1.txt', True)
+    else:
+        create_test_file('problem2.txt', False)
 
-# Print Best Individual
-print(f"Best Individual:\n\tFitness: {best2.fitness:,}\n\tStack: {best2}")
+if p1:
+    nums = get_numbers('problem1.txt')
+
+    GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
+                          use_elitism=False, use_culling=False, max_time_seconds=10)
+    best = GA.run()
+
+    # Print Best Individual
+    print(f"Best Individual:\n\tFitness: {best.fitness:,}\n\tBins: {best.bins}")
+
+else:
+    pieces = get_pieces('problem2.txt')
+    GA2 = GeneticAlgorithm(data=pieces, population_size=500, mutation_rate=0.3,
+                           use_elitism=False, use_culling=False, max_time_seconds=10)
+    best2 = GA2.run()
+
+    # Print Best Individual
+    print(f"Best Individual:\n\tFitness: {best2.fitness:,}\n\tStack: {best2}")
