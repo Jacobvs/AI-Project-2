@@ -84,12 +84,12 @@ def main(*args):
             problem_2(pieces, max_runtime_seconds)
 
     elif len(args) == 0:
-        run_p1 = input("Run Problem 1 or Problem 2? (1/2)")
+        run_p1 = input("Run Problem 1 or Problem 2? (1/2)\n")
         p1 = True
         if run_p1 == '2':
             p1 = False
 
-        gen_new = input("Generate new test file? (y/n)")
+        gen_new = input("Generate new test file? (y/n)\n")
         if gen_new == 'y':
             if p1:
                 create_test_file('problem1.txt', True)
