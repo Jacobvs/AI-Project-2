@@ -22,7 +22,10 @@ class BinType(enum.Enum):
         """
         # Multiply all numbers together
         if self == BinType.MULTIPLY:
-            return math.prod(numbers)
+            running = 1
+            for n in numbers:
+                running *= n
+            return running
         # Add numbers together
         elif self == BinType.ADD:
             return sum(numbers)

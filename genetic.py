@@ -422,8 +422,8 @@ class GeneticAlgorithm:
                 self.best_individual = best_fit
                 print(f"Generation {gen_num} | Best Fitness: {self.best_fitness:,} | Worst Fitness: {min(self.fitness_history)}")
 
-            else:
-                print(f"Generation {gen_num} | Best Fitness: {self.best_fitness}")
+            # else:
+            #     print(f"Generation {gen_num} | Best Fitness: {self.best_fitness}")
                 # # Check if fitness has converged
                 # if len(self.fitness_history) > 1:
                 #     if abs(self.fitness_history[-1] - self.fitness_history[-2]) < self.convergence_threshold:
@@ -435,7 +435,7 @@ class GeneticAlgorithm:
             next_gen = []
 
         print(f"Max time reached after {gen_num} generations")
-        return self.best_individual
+        return gen_num, self.best_individual
 
 
 
