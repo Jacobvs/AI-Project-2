@@ -185,7 +185,7 @@ class GeneticAlgorithm:
             if best_fit.fitness > self.best_fitness:
                 self.best_fitness = best_fit.fitness
                 self.best_individual = best_fit
-                print(f"Generation {gen_num} | Best Fitness: {self.best_fitness} | Worst Fitness: {min(self.fitness_history)}")
+                print(f"Generation {gen_num} | Best Fitness: {self.best_fitness:,} | Worst Fitness: {min(self.fitness_history)}")
 
             # else:
             #     print(f"Generation {gen_num} | Best Fitness: {self.best_fitness}")
