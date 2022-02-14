@@ -9,37 +9,104 @@ import random
 import time
 import typing
 from copy import copy
-
+from puzzle2 import puzzle2Piece, Tower
 import numpy as np
-
 from NumberAlloc import NumberAlloc
 
+"""
+P1:
+Door, 6, 6, 5
+Wall, 4, 9, 3
+Lookout, 2, 3, 6
 
-def find_and_swap_duplicates(list_1, list_2, l1_duplicate_index):
-    _seen = set(list_2)
-    seen = []
-    for i in range(len(list_2)):
-        if list_2[i] in _seen:
-            if list_2[i] in seen:
-                _tmp = list_1[l1_duplicate_index]
-                list_1[l1_duplicate_index] = list_2[i]
-                list_2[i] = _tmp
-                break
-            else:
-                seen.append(list_2[i])
-    return list_1, list_2
+P2:
+Door, 6, 6, 5
+Wall, 4, 9, 3
+Lookout, 2, 3, 6
 
-def fix_duplicates(numberlist, original_frequencies: typing.Dict[int, int]):
+C1:
+Door, 6, 6, 5
+Wall, 4, 9, 3
+Wall, 4, 9, 3
+Lookout, 2, 3, 6
+
+C2:
+Door, 6, 6, 5
+Wall, 4, 9, 3
+Wall, 4, 9, 3
+Lookout, 2, 3, 6
+
+
+
+NEw: 
+
+Wall, 3, 8, 5
+Lookout, 2, 5, 5
+Wall, 1, 8, 9
+Lookout, 6, 1, 2
+Door, 5, 5, 2
+Wall, 6, 4, 2
+
+Lookout, 6, 1, 2
+Wall, 2, 9, 6
+Lookout, 2, 5, 5
+Wall, 1, 8, 9
+
+
+Children:
+Wall, 3, 8, 5
+, Lookout, 2, 5, 5
+, Lookout, 6, 1, 2
+, Lookout, 2, 5, 5
+, Wall, 1, 8, 9
+
+Lookout, 6, 1, 2
+, Wall, 2, 9, 6
+, Lookout, 6, 1, 2
+, Lookout, 2, 5, 5
+, Wall, 1, 8, 9
+
+
+C1:
+Wall, 3, 8, 5
+Lookout, 2, 5, 5
+Wall, 1, 8, 9
+Door, 5, 5, 2
+Wall, 1, 8, 9
+Lookout, 6, 1, 2
+
+dups: [3]
+
+
+
+C2:
+Lookout, 6, 1, 2
+Wall, 2, 9, 6
+Lookout, 2, 5, 5
+Wall, 6, 4, 2
+
+
+
+"""
+
+
+def find_remove_indexes(data, original_frequencies: typing.Dict):
     new_freq = {}
     remove_indexes = []
-    for i, num in enumerate(numberlist):
-        if num in new_freq:
-            if new_freq[num] >= original_frequencies[num]:
+    for i, piece in enumerate(data):
+        if piece in new_freq:
+            if new_freq[piece] >= original_frequencies[piece]:
                 remove_indexes.append(i)
             else:
-                new_freq[num] += 1
+                new_freq[piece] += 1
         else:
-             new_freq[num] = 1
+            new_freq[piece] = 1
+
+    return new_freq, remove_indexes
+
+
+def fix_duplicates(numberlist, original_frequencies: typing.Dict[int, int]):
+    new_freq, remove_indexes = find_remove_indexes(numberlist, original_frequencies)
 
     for num, count in original_frequencies.items():
         if num not in new_freq or count > new_freq[num]:
@@ -48,43 +115,208 @@ def fix_duplicates(numberlist, original_frequencies: typing.Dict[int, int]):
 
     return numberlist
 
+def fix_towers(p1_pieces, p2_pieces, original_frequencies: typing.Dict):
+    # Check p1_pieces for duplicates based on original_frequencies and store indexes to remove
+    new_freq, remove_indexes = find_remove_indexes(p1_pieces, original_frequencies)
+    # Now that we have duplicates for P1, switch them
+    len_diff = len(p1_pieces) - len(p2_pieces)
+    for i in remove_indexes:
+        _tmp = p1_pieces[i]
+        p2_pieces[i-len_diff] = p1_pieces[i]
+        p1_pieces[i] = _tmp
 
-def crossover(parent_1: NumberAlloc, parent_2: NumberAlloc, original_frequencies: typing.Dict[int, int]):
+    # Check p2_pieces for duplicates based on original_frequencies and store indexes to remove
+    new_freq, remove_indexes = find_remove_indexes(p2_pieces, original_frequencies)
+    # Now that we have duplicates for P2, switch them
+    for i in remove_indexes:
+        _tmp = p2_pieces[i]
+        p1_pieces[i+len_diff] = p2_pieces[i]
+        p2_pieces[i] = _tmp
+
+    return p1_pieces, p2_pieces
+
+
+def check(piece, freq, original_frequencies):
+    if piece in freq:
+        if freq[piece] >= original_frequencies[piece]:
+            return False
+        else:
+            return True
+    elif piece in original_frequencies:
+        return True
+    return False
+
+
+def uniform_random_xover(p1_list, p2_list, original_frequencies: typing.Dict):
+    out1, out2 = [], []
+
+    # For each position, choose randomly from the two parents, storing the unused piece in a list
+    # If adding the random piece to the child would cause the frequency of the piece to exceed the original frequency,
+    # then we can check if the piece from the other parent would also cause this issue. If not, we can add it to the child.
+    # If the piece from the other parent would cause the frequency to exceed the original frequency,
+    # then we can go down the unused list and keep trying to add pieces until we find one that doesn't cause the frequency to exceed the original frequency.
+    # if none are found, we move on.
+
+    # Loop twice to fill out1 and out2
+    shorter = p1_list if len(p1_list) < len(p2_list) else p2_list
+    for i in range(2):
+        out = []
+        unused = []
+        frequencies = {}
+        for i in range(len(shorter)):
+            use_p1 = random.random() < 0.5
+            piece, replacement = p1_list[i] if use_p1 else p2_list[i], p2_list[i] if use_p1 else p1_list[i]
+
+            if check(piece, frequencies, original_frequencies):
+                frequencies[piece] = frequencies.get(piece, 0) + 1
+                out.append(piece)
+                unused.insert(0, replacement)
+                continue
+            else:
+                # Check the other piece
+                if check(replacement, frequencies, original_frequencies):
+                    frequencies[replacement] = frequencies.get(replacement, 0) + 1
+                    out.append(replacement)
+                    continue
+                else:
+                    for p in unused:
+                        unused.remove(p)
+                        if check(p, frequencies, original_frequencies):
+                            frequencies[p] = frequencies.get(p, 0) + 1
+                            out.append(p)
+                            break
+
+        if not out1:
+            out1 = out
+        else:
+            out2 = out
+
+    return out1, out2
+
+
+
+def crossover(parent_1, parent_2, original_frequencies: typing.Dict):
     # To get two children, the number list from each parent is split in half.
     # The first half is used for the first child, and the second half is used for the second child.
     # The numbers in the first child are scanned for duplicates,
     # if any are found, the duplicate is swapped with the respective duplicate found in the second child.
+    if isinstance(parent_1, NumberAlloc):
+        p1_list = parent_1.numbers
+        p2_list = parent_2.numbers
+        parent1_first_half, parent1_second_half = p1_list[:-(len(p1_list) // -2)], p1_list[len(p1_list) // 2:]
+        parent2_first_half, parent2_second_half = p2_list[:-(len(p2_list) // -2)], p2_list[len(p2_list) // 2:]
 
-    parent1_first_half, parent1_second_half = parent_1.numbers[:len(parent_1.numbers)//2], parent_1.numbers[len(parent_1.numbers)//2:]
-    parent2_first_half, parent2_second_half = parent_2.numbers[:len(parent_2.numbers)//2], parent_2.numbers[len(parent_2.numbers)//2:]
+        c1_nums = parent1_first_half + parent2_second_half
+        c2_nums = parent2_first_half + parent1_second_half
 
-    c1_nums = parent1_first_half + parent2_second_half
-    c2_nums = parent1_second_half + parent2_first_half
+        c1_nums = fix_duplicates(c1_nums, original_frequencies)
+        c2_nums = fix_duplicates(c2_nums, original_frequencies)
 
-    c1_nums = fix_duplicates(c1_nums, original_frequencies)
-    c2_nums = fix_duplicates(c2_nums, original_frequencies)
+        return NumberAlloc(c1_nums), NumberAlloc(c2_nums)
 
-    return NumberAlloc(c1_nums), NumberAlloc(c2_nums)
+    else:
+        p1_list = parent_1.listOfPieces
+        p2_list = parent_2.listOfPieces
+
+        c1_nums, c2_nums = uniform_random_xover(p1_list, p2_list, original_frequencies)
+
+        # c1_nums = p1_list[:-(len(p1_list) // -2)]
+        #
+        # for p in p2_list:
+        #     if p not in c1_nums:
+        #         c1_nums.append(p)
+        #
+        # c2_nums = p2_list[:-(len(p2_list) // -2)]
+        #
+        # for p in p1_list:
+        #     if p not in c2_nums:
+        #         c2_nums.append(p)
+
+
+        # parent1_first_half, parent1_second_half = p1_list[:-(len(p1_list) // -2)], p1_list[-(len(p1_list) // -2):]
+        # parent2_first_half, parent2_second_half = p2_list[:-(len(p2_list) // -2)], p2_list[-(len(p2_list) // -2):]
+        #
+        # c1_nums = parent1_first_half + parent2_second_half
+        # c2_nums = parent2_first_half + parent1_second_half
+        #
+        # c1_nums, c2_nums = fix_towers(c1_nums, c2_nums, original_frequencies)
+        #
+        # if len(set(c1_nums)) != len(c1_nums) or len(set(c2_nums)) != len(c2_nums):
+        #     print("Error: Duplicates in child")
+        #     print(parent_1)
+        #     print(parent_2)
+        #     print(", ".join(str(x) for x in c1_nums))
+        #     print(", ".join(str(x) for x in c2_nums))
+        #     exit()
+
+        return Tower(c1_nums, parent_1.allPieces), Tower(c2_nums, parent_1.allPieces)
+
+
+def get_fitness_probabilities(population):
+    # Calculate the fitness probabilities for each individual in the population
+    # The fitness probabilities are calculated by dividing the fitness value by the sum of all fitness values
+    # This ensures that the probabilities sum to 1
+    # The fitness probabilities are then used to select the parents in the roulette wheel selection
+
+    fitness_probabilities = []
+    sum_of_fitness_values = sum(individual.fitness for individual in population)
+    if sum_of_fitness_values == 0:
+        return [1 / len(population) for individual in population]
+    for individual in population:
+        fitness_probabilities.append(individual.fitness / sum_of_fitness_values)
+
+    return fitness_probabilities
+
+
+def select_parents_roulette(sorted_population):
+    # Select two parents from the sorted population using Roulette Wheel Selection
+    # The two parents are selected using their fitness values
+
+    # Choose two parents randomly weighted by their fitness values
+    parent_1 = np.random.choice(sorted_population, p=get_fitness_probabilities(sorted_population))
+    sorted_population.remove(parent_1)
+    parent_2 = np.random.choice(sorted_population, p=get_fitness_probabilities(sorted_population))
+
+    return parent_1, parent_2
+
+
+def select_parents_tournament(sorted_population, k):
+    # Select two parents from the sorted population
+    # The two parents are selected using their fitness values
+    # Because fitness values can be negative, we should use Tournament Selection
+    # The k parameter is the number of individuals to be selected during the tournament, which are then compared to each other
+    # The individual with the highest fitness is selected as the first parent
+    # The tournament is re-run for the second parent
+
+    choices = np.random.choice(sorted_population, replace=False, size=k)
+    parent_1 = max(choices, key=lambda x: x.fitness)
+    sorted_population.remove(parent_1)
+    choices = np.random.choice(sorted_population, replace=False, size=k)
+    parent_2 = max(choices, key=lambda x: x.fitness)
+
+    return parent_1, parent_2
 
 
 class GeneticAlgorithm:
-    def __init__(self, numbers: typing.List[int], population_size: int, mutation_rate: float, tournament_size: int,
-                 use_culling: bool, use_elitism: bool, max_time):
+    def __init__(self, data: typing.List[typing.Union[int, puzzle2Piece]], population_size: int, mutation_rate: float,
+                 use_culling: bool, use_elitism: bool, max_time_seconds: float, tournament_size: int = 4):
 
         # Ensure there are exactly 40 numbers
-        if len(numbers) != 40:
-            raise ValueError("Number list must contain 40 numbers")
+        if len(data) != 40 and isinstance(data[0], int):
+            raise ValueError("Data list must contain 40 numbers")
+        elif len(data) > 1000 and isinstance(data[0], puzzle2Piece):
+            raise ValueError("Data list must contain a max of 10 pieces")
 
         self.population_size = population_size
         self.mutation_rate = mutation_rate
-        self.max_time = max_time
+        self.max_time = max_time_seconds
         self.population = []
         self.fitness_history = []
         self.best_fitness = float('-inf')
         self.best_individual = None
-        self.numbers = numbers
+        self.data = data
         self.convergence_threshold = 0.01
-        self.number_frequency = {}
+        self.data_frequency = {}
         self.tournament_size = tournament_size
         self.use_culling = use_culling
         self.use_elitism = use_elitism
@@ -93,37 +325,25 @@ class GeneticAlgorithm:
         self.get_frequencies()
 
     def get_frequencies(self):
-        for n in self.numbers:
-            if n in self.number_frequency:
-                self.number_frequency[n] += 1
+        for n in self.data:
+            if n in self.data_frequency:
+                self.data_frequency[n] += 1
             else:
-                self.number_frequency[n] = 1
+                self.data_frequency[n] = 1
 
     def generate_population(self):
-        for i in range(self.population_size):
-            random.shuffle(self.numbers)
-            self.population.append(NumberAlloc(self.numbers))
+            for i in range(self.population_size):
+                random.shuffle(self.data)
 
-    def select_parents(self, sorted_population, k):
-        # Select two parents from the sorted population
-        # The two parents are selected using their fitness values
-        # Because fitness values can be negative, we should use Tournament Selection
-        # The k parameter is the number of individuals to be selected during the tournament, which are then compared to each other
-        # The individual with the highest fitness is selected as the first parent
-        # The tournament is re-run for the second parent
-
-        choices = np.random.choice(sorted_population, replace=False, size=k)
-        parent_1 = max(choices, key=lambda x: x.fitness)
-        sorted_population.remove(parent_1)
-        choices = np.random.choice(sorted_population, replace=False, size=k)
-        parent_2 = max(choices, key=lambda x: x.fitness)
-
-        return parent_1, parent_2
-
+                if isinstance(self.data[0], int):
+                    self.population.append(NumberAlloc(self.data))
+                else:
+                    self.population.append(Tower(self.data[:random.randint(2, len(self.data))], self.data))
 
     def run(self):
         # Initialize the population
         self.generate_population()
+
         # Loop through generations
         start_time = time.time()
         gen_num = 0
@@ -144,6 +364,8 @@ class GeneticAlgorithm:
         # [Test] If the end condition is satisfied, stop, and return the best solution in current population
         # [Loop] Go to step 2
 
+        is_problem_1 = isinstance(self.best_individual, NumberAlloc)
+
         while time.time() - start_time < self.max_time:
             gen_num += 1
 
@@ -162,15 +384,23 @@ class GeneticAlgorithm:
             while len(next_gen) < self.population_size:
 
                 # [Selection] Select two parent chromosomes from a population
-                parent_1, parent_2 = self.select_parents(sorted(self.population, key=lambda x: x.fitness), self.tournament_size)
+                parent_1, parent_2 = select_parents_tournament(self.population, self.tournament_size) if is_problem_1 else select_parents_roulette(self.population)
 
                 # [Crossover] With a crossover probability cross over the parents to form a new offspring (children).
                 # If no crossover was performed, offspring is an exact copy of parents.
-                child_1, child_2 = crossover(parent_1, parent_2, self.number_frequency)
+                child_1, child_2 = crossover(parent_1, parent_2, self.data_frequency)
+
+                # if max(child_1.fitness, child_2.fitness) > max(parent_1.fitness, parent_2.fitness):
+                #     print("Child fitness is higher than parent fitness..")
+                #     print(parent_1)
+                #     print(parent_2)
+                #     print(child_1)
+                #     print(child_2)
 
                 # [Mutation] With a mutation probability mutate new offspring at each locus (position in chromosome).
                 child_1.mutate(self.mutation_rate)
                 child_2.mutate(self.mutation_rate)
+
 
                 # [Accepting] Place new offspring and parents in a new population
                 next_gen.append(child_1)
@@ -205,7 +435,7 @@ class GeneticAlgorithm:
             next_gen = []
 
         print(f"Max time reached after {gen_num} generations")
-        return self.best_individual
+        return gen_num, self.best_individual
 
 
 
