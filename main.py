@@ -50,7 +50,7 @@ def get_pieces(filename):
 
 def problem_1(nums, max_runtime_seconds):
     GA = GeneticAlgorithm(data=nums, population_size=20, mutation_rate=0.15, tournament_size=4,
-                          use_elitism=False, use_culling=False, max_time_seconds=max_runtime_seconds)
+                          use_elitism=True, use_culling=True, max_time_seconds=max_runtime_seconds)
     gen_num, best = GA.run()
 
     bins = '\n'.join(str(k) + ": " + str(v) for k, v in best.bins.items())
@@ -61,7 +61,7 @@ def problem_1(nums, max_runtime_seconds):
 
 def problem_2(pieces, max_runtime_seconds):
     GA2 = GeneticAlgorithm(data=pieces, population_size=400, mutation_rate=0.25,
-                           use_elitism=False, use_culling=False, max_time_seconds=max_runtime_seconds)
+                           use_elitism=True, use_culling=True, max_time_seconds=max_runtime_seconds)
     gen_num, best2 = GA2.run()
 
     # Print Best Individual
