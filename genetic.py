@@ -423,14 +423,17 @@ class GeneticAlgorithm:
                 self.best_individual = best_fit
                 # print(f"Generation {gen_num} | Best Fitness: {self.best_fitness:,} | Worst Fitness: {min(self.fitness_history)}")
 
-            else:
-                if gen_num % (100 if is_problem_1 else 2) == 0:
-                    print(f"{gen_num}, {max(self.population, key=lambda x: x.fitness).fitness}, {min(self.population, key=lambda x: x.fitness).fitness}, {statistics.median(x.fitness for x in self.population)}")
+            # else:
                 # # Check if fitness has converged
                 # if len(self.fitness_history) > 1:
                 #     if abs(self.fitness_history[-1] - self.fitness_history[-2]) < self.convergence_threshold:
                 #         print(f"Converged after {gen_num} generations")
                 #         return self.best_individual
+            if gen_num % (100 if is_problem_1 else 1) == 0:
+                print(
+                    f"{gen_num}, {max(self.population, key=lambda x: x.fitness).fitness}, "
+                    f"{min(self.population, key=lambda x: x.fitness).fitness}, "
+                    f"{statistics.median(x.fitness for x in self.population)}")
 
             # [Replace] Replace the old population with the new population
             self.population = next_gen
